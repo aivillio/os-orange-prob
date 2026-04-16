@@ -100,3 +100,17 @@ Scale estimate:
 - In a typical repo this is on the order of hundreds of thousands to a few million objects, depending on file churn and tree fan-out.
 
 ### Q6.2
+Concurrent GC is dangerous because commit creation is multi-step and objects appear before refs move.
+
+Race example:
+1. Writer creates new blob/tree/commit objects.
+2. Before writer updates `refs/heads/main`, GC starts reachability from existing refs.
+3. New objects are not yet reachable from any ref, so GC classifies them unreachable.
+4. GC deletes them.
+5. Writer updates branch ref to the just-deleted commit hash, leaving broken history.
+
+How real Git avoids this:
+- Uses GC safety windows (prune only old unreachable objects).
+- Uses lock files and coordination around ref/object updates.
+- Uses pack/loose object management that avoids deleting very recent objects immediately.
+- Often requires repository quiescence (or carefully coordinated maintenance) for aggressive pruning.
