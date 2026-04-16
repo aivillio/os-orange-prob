@@ -230,6 +230,8 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
 // Returns 0 on success, -1 on error (file not found, corrupt, etc.).
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
     if (!id || !type_out || !data_out || !len_out) return -1;
+    *data_out = NULL;
+    *len_out = 0;
 
     char path[512];
     object_path(id, path, sizeof(path));
@@ -242,7 +244,7 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
         return -1;
     }
     long fsize = ftell(f);
-    if (fsize < 0) {
+    if (fsize <= 0) {
         fclose(f);
         return -1;
     }
