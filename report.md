@@ -94,6 +94,14 @@ Sweep phase:
 Data structure:
 - Use a hash set keyed by 32-byte object id (or 64-char hex) for O(1) average membership checks.
 
+Pseudo-flow:
+- `worklist = refs + detached_head_if_any`
+- while worklist not empty:
+	- pop hash `h`; if already marked continue; mark `h`
+	- if commit: enqueue parent + tree
+	- if tree: enqueue every entry hash
+	- if blob: no outgoing edges
+
 Scale estimate:
 - 100,000 commits and 50 branches still seed only 50 starting points.
 - Reachability walk visits each reachable commit/tree/blob once.
