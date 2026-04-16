@@ -106,6 +106,7 @@ Scale estimate:
 - 100,000 commits and 50 branches still seed only 50 starting points.
 - Reachability walk visits each reachable commit/tree/blob once.
 - In a typical repo this is on the order of hundreds of thousands to a few million objects, depending on file churn and tree fan-out.
+- Lower bound intuition: at least ~100,000 commit objects and roughly similar-order tree objects are traversed, even before counting blobs.
 
 Complexity:
 - Time: O(C + T + B) over reachable commits/trees/blobs, plus O(AllObjects) for sweep listing.
