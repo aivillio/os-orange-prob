@@ -39,6 +39,11 @@ Conflict detection can be done with index metadata + staged blob hashes + target
 
 In that case, refuse checkout and print conflicting paths. This prevents clobbering local user changes.
 
+Quick rule summary:
+- Local clean + target changed: safe to checkout.
+- Local dirty + target unchanged from current: can keep local file.
+- Local dirty + target changed differently: conflict, refuse.
+
 ### Q5.3
 In detached HEAD mode, `HEAD` contains a commit hash directly instead of a branch ref.
 
