@@ -36,15 +36,15 @@ static int load_staged_paths(StagedPath *entries, int *count_out) {
 
     int count = 0;
     char hex[HASH_HEX_SIZE + 1];
-    uint64_t mtime = 0;
-    uint32_t size = 0;
+    unsigned long long mtime = 0;
+    unsigned int size = 0;
 
     while (count < MAX_STAGED_PATHS) {
         StagedPath e;
         int rc = fscanf(f, "%o %64s %llu %u %511s",
                         &e.mode,
                         hex,
-                        (unsigned long long *)&mtime,
+                        &mtime,
                         &size,
                         e.path);
         if (rc == EOF) break;
@@ -107,7 +107,7 @@ static int write_tree_level(const StagedPath *entries, int count, const char *pr
             if (write_tree_level(entries, count, child_prefix, &child_id) != 0) return -1;
 
             TreeEntry *te = &tree.entries[tree.count++];
-            te->mode = MODE_DIR;
+            te->mode = 0040000;
             te->hash = child_id;
             snprintf(te->name, sizeof(te->name), "%s", dirname);
             continue;
