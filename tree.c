@@ -76,6 +76,36 @@ static int tree_has_entry_named(const Tree *tree, const char *name) {
     return 0;
 }
 
+static int write_tree_level(const StagedPath *entries, int count, const char *prefix, ObjectID *id_out) {
+    Tree tree;
+    tree.count = 0;
+
+    size_t prefix_len = strlen(prefix);
+
+    for (int i = 0; i < count; i++) {
+        if (!path_has_prefix(entries[i].path, prefix)) continue;
+
+        const char *rest = entries[i].path + prefix_len;
+        if (*rest == '\0') continue;
+
+        const char *slash = strchr(rest, '/');
+        if (slash) continue;
+
+        if (tree.count >= MAX_TREE_ENTRIES) return -1;
+        TreeEntry *te = &tree.entries[tree.count++];
+        te->mode = entries[i].mode;
+        te->hash = entries[i].hash;
+        snprintf(te->name, sizeof(te->name), "%s", rest);
+    }
+
+    void *raw = NULL;
+    size_t raw_len = 0;
+    if (tree_serialize(&tree, &raw, &raw_len) != 0) return -1;
+    int rc = object_write(OBJ_TREE, raw, raw_len, id_out);
+    free(raw);
+    return rc;
+}
+
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
 #define MODE_FILE      0100644
