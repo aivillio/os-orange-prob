@@ -155,6 +155,30 @@ int index_load(Index *index) {
         return -1;
     }
 
+    while (index->count < MAX_INDEX_ENTRIES) {
+        IndexEntry e;
+        char hash_hex[HASH_HEX_SIZE + 1];
+
+        int rc = fscanf(f, "%o %64s %" SCNu64 " %u %511s",
+                        &e.mode,
+                        hash_hex,
+                        &e.mtime_sec,
+                        &e.size,
+                        e.path);
+        if (rc == EOF) break;
+        if (rc != 5) {
+            fclose(f);
+            return -1;
+        }
+
+        if (hex_to_hash(hash_hex, &e.hash) != 0) {
+            fclose(f);
+            return -1;
+        }
+
+        index->entries[index->count++] = e;
+    }
+
     fclose(f);
     return 0;
 }
