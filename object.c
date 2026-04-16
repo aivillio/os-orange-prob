@@ -15,7 +15,17 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <openssl/evp.h>
+
+static const char *object_type_name(ObjectType type) {
+    switch (type) {
+        case OBJ_BLOB: return "blob";
+        case OBJ_TREE: return "tree";
+        case OBJ_COMMIT: return "commit";
+        default: return NULL;
+    }
+}
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
