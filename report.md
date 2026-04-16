@@ -131,3 +131,6 @@ How real Git avoids this:
 Practical PES-VCS mitigation:
 - Hold a repo-wide lock for `commit` and `gc` so they are mutually exclusive.
 - During mark phase, also treat in-progress temporary objects younger than a grace period as protected.
+
+Conservative policy:
+- Never prune objects newer than a threshold (for example 24h) to preserve a recovery window after accidental ref updates.
