@@ -204,23 +204,29 @@ int index_load(Index *index) {
 int index_save(const Index *index) {
     if (!index) return -1;
 
-    Index sorted = *index;
-    qsort(sorted.entries, sorted.count, sizeof(IndexEntry), compare_index_entries);
+    IndexEntry *sorted = NULL;
+    if (index->count > 0) {
+        sorted = malloc((size_t)index->count * sizeof(IndexEntry));
+        if (!sorted) return -1;
+        memcpy(sorted, index->entries, (size_t)index->count * sizeof(IndexEntry));
+        qsort(sorted, index->count, sizeof(IndexEntry), compare_index_entries);
+    }
 
     const char *tmp_path = INDEX_FILE ".tmp";
     FILE *f = fopen(tmp_path, "w");
     if (!f) return -1;
 
-    for (int i = 0; i < sorted.count; i++) {
+    for (int i = 0; i < index->count; i++) {
         char hex[HASH_HEX_SIZE + 1];
-        hash_to_hex(&sorted.entries[i].hash, hex);
+        hash_to_hex(&sorted[i].hash, hex);
 
         if (fprintf(f, "%o %s %" PRIu64 " %u %s\n",
-                    sorted.entries[i].mode,
+                    sorted[i].mode,
                     hex,
-                    sorted.entries[i].mtime_sec,
-                    sorted.entries[i].size,
-                    sorted.entries[i].path) < 0) {
+                    sorted[i].mtime_sec,
+                    sorted[i].size,
+                    sorted[i].path) < 0) {
+            free(sorted);
             fclose(f);
             unlink(tmp_path);
             return -1;
@@ -228,20 +234,24 @@ int index_save(const Index *index) {
     }
 
     if (fflush(f) != 0 || fsync(fileno(f)) != 0) {
+        free(sorted);
         fclose(f);
         unlink(tmp_path);
         return -1;
     }
     if (fclose(f) != 0) {
+        free(sorted);
         unlink(tmp_path);
         return -1;
     }
 
     if (rename(tmp_path, INDEX_FILE) != 0) {
+        free(sorted);
         unlink(tmp_path);
         return -1;
     }
 
+    free(sorted);
     if (fsync_dir_path(PES_DIR) != 0) return -1;
 
     return 0;
