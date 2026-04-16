@@ -35,6 +35,14 @@ static int compare_index_entries(const void *a, const void *b) {
     return strcmp(ea->path, eb->path);
 }
 
+static int fsync_dir_path(const char *path) {
+    int dfd = open(path, O_RDONLY | O_DIRECTORY);
+    if (dfd < 0) return -1;
+    int rc = fsync(dfd);
+    close(dfd);
+    return rc;
+}
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Find an index entry by path (linear scan).
@@ -233,6 +241,8 @@ int index_save(const Index *index) {
         unlink(tmp_path);
         return -1;
     }
+
+    if (fsync_dir_path(PES_DIR) != 0) return -1;
 
     return 0;
 }
