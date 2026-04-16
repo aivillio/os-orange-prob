@@ -57,6 +57,11 @@ Recovery options:
 - Or manually write the commit hash to a new ref file under `.pes/refs/heads/`.
 - If user already moved away, recover via reflog-like history (if implemented) before GC prunes unreachable commits.
 
+Example recovery flow:
+- While detached at `<H>` after new work, create `refs/heads/recover` = `<H>`.
+- Reattach `HEAD` to `ref: refs/heads/recover`.
+- Commits are now protected from becoming unreachable.
+
 Operational ordering note:
 1. Resolve target commit and compute file actions.
 2. Run dirty/conflict checks.
