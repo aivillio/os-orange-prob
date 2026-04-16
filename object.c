@@ -175,9 +175,9 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     }
 
     char tmp_path[544];
-    snprintf(tmp_path, sizeof(tmp_path), "%s/.tmp-%d", shard_dir, (int)getpid());
+    snprintf(tmp_path, sizeof(tmp_path), "%s/.tmp-XXXXXX", shard_dir);
 
-    int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    int fd = mkstemp(tmp_path);
     if (fd < 0) {
         free(full_obj);
         return -1;
