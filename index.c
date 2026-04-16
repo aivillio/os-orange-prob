@@ -23,6 +23,17 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
+#include <inttypes.h>
+
+// Implemented in object.c
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+
+static int compare_index_entries(const void *a, const void *b) {
+    const IndexEntry *ea = (const IndexEntry *)a;
+    const IndexEntry *eb = (const IndexEntry *)b;
+    return strcmp(ea->path, eb->path);
+}
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
