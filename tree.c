@@ -27,6 +27,43 @@ typedef struct {
 // Implemented in object.c
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
 
+static int load_staged_paths(StagedPath *entries, int *count_out) {
+    FILE *f = fopen(INDEX_FILE, "r");
+    if (!f) {
+        *count_out = 0;
+        return 0;
+    }
+
+    int count = 0;
+    char hex[HASH_HEX_SIZE + 1];
+    uint64_t mtime = 0;
+    uint32_t size = 0;
+
+    while (count < MAX_STAGED_PATHS) {
+        StagedPath e;
+        int rc = fscanf(f, "%o %64s %llu %u %511s",
+                        &e.mode,
+                        hex,
+                        (unsigned long long *)&mtime,
+                        &size,
+                        e.path);
+        if (rc == EOF) break;
+        if (rc != 5) {
+            fclose(f);
+            return -1;
+        }
+        if (hex_to_hash(hex, &e.hash) != 0) {
+            fclose(f);
+            return -1;
+        }
+        entries[count++] = e;
+    }
+
+    fclose(f);
+    *count_out = count;
+    return 0;
+}
+
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
 #define MODE_FILE      0100644
