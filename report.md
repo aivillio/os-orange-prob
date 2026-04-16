@@ -126,3 +126,7 @@ How real Git avoids this:
 - Uses lock files and coordination around ref/object updates.
 - Uses pack/loose object management that avoids deleting very recent objects immediately.
 - Often requires repository quiescence (or carefully coordinated maintenance) for aggressive pruning.
+
+Practical PES-VCS mitigation:
+- Hold a repo-wide lock for `commit` and `gc` so they are mutually exclusive.
+- During mark phase, also treat in-progress temporary objects younger than a grace period as protected.
