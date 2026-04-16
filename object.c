@@ -48,6 +48,22 @@ static int fsync_dir(const char *path) {
     return rc;
 }
 
+static int parse_type_name(const char *s, ObjectType *type_out) {
+    if (strcmp(s, "blob") == 0) {
+        *type_out = OBJ_BLOB;
+        return 0;
+    }
+    if (strcmp(s, "tree") == 0) {
+        *type_out = OBJ_TREE;
+        return 0;
+    }
+    if (strcmp(s, "commit") == 0) {
+        *type_out = OBJ_COMMIT;
+        return 0;
+    }
+    return -1;
+}
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 void hash_to_hex(const ObjectID *id, char *hex_out) {
