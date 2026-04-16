@@ -74,5 +74,29 @@ Updating refs last avoids advertising a branch tip that the working tree/index h
 ## Phase 6: Garbage Collection and Space Reclamation
 
 ### Q6.1
+Use a mark-and-sweep GC over the object graph.
+
+Mark phase:
+1. Seed a worklist with all branch tips from `.pes/refs/heads/*` (and detached `HEAD` hash if present).
+2. Pop each commit hash:
+	- Mark commit hash as reachable.
+	- Parse commit and enqueue its `tree` and optional `parent`.
+3. For each tree hash:
+	- Mark tree hash.
+	- Parse tree entries; enqueue child tree hashes and blob hashes.
+4. For blobs: mark and stop (leaf objects).
+
+Sweep phase:
+1. Enumerate all files under `.pes/objects/`.
+2. Reconstruct each object hash from shard path.
+3. Delete objects not present in the reachable set.
+
+Data structure:
+- Use a hash set keyed by 32-byte object id (or 64-char hex) for O(1) average membership checks.
+
+Scale estimate:
+- 100,000 commits and 50 branches still seed only 50 starting points.
+- Reachability walk visits each reachable commit/tree/blob once.
+- In a typical repo this is on the order of hundreds of thousands to a few million objects, depending on file churn and tree fan-out.
 
 ### Q6.2
