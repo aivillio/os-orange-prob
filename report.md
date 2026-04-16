@@ -52,6 +52,15 @@ Recovery options:
 - Or manually write the commit hash to a new ref file under `.pes/refs/heads/`.
 - If user already moved away, recover via reflog-like history (if implemented) before GC prunes unreachable commits.
 
+Operational ordering note:
+1. Resolve target commit and compute file actions.
+2. Run dirty/conflict checks.
+3. Apply file updates in working directory.
+4. Rewrite index from target tree.
+5. Update `HEAD`/branch pointer last.
+
+Updating refs last avoids advertising a branch tip that the working tree/index has not finished materializing.
+
 ## Phase 6: Garbage Collection and Space Reclamation
 
 ### Q6.1
