@@ -27,6 +27,27 @@ static const char *object_type_name(ObjectType type) {
     }
 }
 
+static int write_full(int fd, const uint8_t *buf, size_t len) {
+    size_t off = 0;
+    while (off < len) {
+        ssize_t n = write(fd, buf + off, len - off);
+        if (n < 0) {
+            if (errno == EINTR) continue;
+            return -1;
+        }
+        off += (size_t)n;
+    }
+    return 0;
+}
+
+static int fsync_dir(const char *path) {
+    int dfd = open(path, O_RDONLY | O_DIRECTORY);
+    if (dfd < 0) return -1;
+    int rc = fsync(dfd);
+    close(dfd);
+    return rc;
+}
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 void hash_to_hex(const ObjectID *id, char *hex_out) {
