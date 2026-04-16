@@ -89,7 +89,29 @@ static int write_tree_level(const StagedPath *entries, int count, const char *pr
         if (*rest == '\0') continue;
 
         const char *slash = strchr(rest, '/');
-        if (slash) continue;
+        if (slash) {
+            size_t dlen = (size_t)(slash - rest);
+            if (dlen == 0 || dlen >= 256) return -1;
+
+            char dirname[256];
+            memcpy(dirname, rest, dlen);
+            dirname[dlen] = '\0';
+
+            if (tree_has_entry_named(&tree, dirname)) continue;
+            if (tree.count >= MAX_TREE_ENTRIES) return -1;
+
+            char child_prefix[1024];
+            snprintf(child_prefix, sizeof(child_prefix), "%s%s/", prefix, dirname);
+
+            ObjectID child_id;
+            if (write_tree_level(entries, count, child_prefix, &child_id) != 0) return -1;
+
+            TreeEntry *te = &tree.entries[tree.count++];
+            te->mode = MODE_DIR;
+            te->hash = child_id;
+            snprintf(te->name, sizeof(te->name), "%s", dirname);
+            continue;
+        }
 
         if (tree.count >= MAX_TREE_ENTRIES) return -1;
         TreeEntry *te = &tree.entries[tree.count++];
