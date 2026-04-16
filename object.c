@@ -125,9 +125,69 @@ int object_exists(const ObjectID *id) {
 //
 // Returns 0 on success, -1 on error.
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out) {
-    // TODO: Implement
-    (void)type; (void)data; (void)len; (void)id_out;
-    return -1;
+    const char *type_name = object_type_name(type);
+    if (!type_name || !data || !id_out) return -1;
+
+    char header[64];
+    int header_len = snprintf(header, sizeof(header), "%s %zu", type_name, len);
+    if (header_len <= 0 || (size_t)header_len + 1 >= sizeof(header)) return -1;
+
+    size_t full_len = (size_t)header_len + 1 + len;
+    uint8_t *full_obj = malloc(full_len);
+    if (!full_obj) return -1;
+
+    memcpy(full_obj, header, (size_t)header_len);
+    full_obj[header_len] = '\0';
+    if (len > 0) memcpy(full_obj + header_len + 1, data, len);
+
+    compute_hash(full_obj, full_len, id_out);
+    if (object_exists(id_out)) {
+        free(full_obj);
+        return 0;
+    }
+
+    char final_path[512];
+    char shard_dir[256];
+    object_path(id_out, final_path, sizeof(final_path));
+
+    char hex[HASH_HEX_SIZE + 1];
+    hash_to_hex(id_out, hex);
+    snprintf(shard_dir, sizeof(shard_dir), "%s/%.2s", OBJECTS_DIR, hex);
+    if (mkdir(shard_dir, 0755) != 0 && errno != EEXIST) {
+        free(full_obj);
+        return -1;
+    }
+
+    char tmp_path[544];
+    snprintf(tmp_path, sizeof(tmp_path), "%s/.tmp-%d", shard_dir, (int)getpid());
+
+    int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    if (fd < 0) {
+        free(full_obj);
+        return -1;
+    }
+
+    if (write_full(fd, full_obj, full_len) != 0 || fsync(fd) != 0) {
+        close(fd);
+        unlink(tmp_path);
+        free(full_obj);
+        return -1;
+    }
+    close(fd);
+
+    if (rename(tmp_path, final_path) != 0) {
+        unlink(tmp_path);
+        free(full_obj);
+        return -1;
+    }
+
+    if (fsync_dir(shard_dir) != 0) {
+        free(full_obj);
+        return -1;
+    }
+
+    free(full_obj);
+    return 0;
 }
 
 // Read an object from the store.
