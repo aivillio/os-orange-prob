@@ -99,6 +99,10 @@ Scale estimate:
 - Reachability walk visits each reachable commit/tree/blob once.
 - In a typical repo this is on the order of hundreds of thousands to a few million objects, depending on file churn and tree fan-out.
 
+Complexity:
+- Time: O(C + T + B) over reachable commits/trees/blobs, plus O(AllObjects) for sweep listing.
+- Space: O(C + T + B) for the reachable-set hash table in the worst case.
+
 ### Q6.2
 Concurrent GC is dangerous because commit creation is multi-step and objects appear before refs move.
 
