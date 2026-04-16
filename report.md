@@ -40,6 +40,17 @@ Conflict detection can be done with index metadata + staged blob hashes + target
 In that case, refuse checkout and print conflicting paths. This prevents clobbering local user changes.
 
 ### Q5.3
+In detached HEAD mode, `HEAD` contains a commit hash directly instead of a branch ref.
+
+If you commit in this state:
+- New commits are created normally with parent pointers.
+- `HEAD` moves to the new commit hash.
+- No branch name advances, so these commits can become unreachable later.
+
+Recovery options:
+- Create a branch at current detached commit (`pes branch rescue` equivalent).
+- Or manually write the commit hash to a new ref file under `.pes/refs/heads/`.
+- If user already moved away, recover via reflog-like history (if implemented) before GC prunes unreachable commits.
 
 ## Phase 6: Garbage Collection and Space Reclamation
 
