@@ -23,6 +23,21 @@ Why checkout is complex:
 - It needs failure-safe ordering (or rollback plan) so partial updates do not leave mixed snapshots.
 
 ### Q5.2
+Conflict detection can be done with index metadata + staged blob hashes + target tree hashes:
+
+1. Build map `current_head[path] -> blob_hash` by expanding the current HEAD tree.
+2. Build map `target[path] -> blob_hash` by expanding the destination branch tree.
+3. For each tracked path in index:
+	- If file is missing in working dir: mark dirty (`deleted` locally).
+	- Else compare current stat (`mtime`, `size`) with index entry.
+	- If metadata differs, recompute blob hash from file and compare with index hash.
+	- If hash differs from index hash, the file has unstaged local edits.
+4. A checkout conflict exists when:
+	- File has local edits, and
+	- `target[path]` exists, and
+	- `target[path]` hash differs from `current_head[path]` hash.
+
+In that case, refuse checkout and print conflicting paths. This prevents clobbering local user changes.
 
 ### Q5.3
 
